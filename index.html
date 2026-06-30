@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>NutriScan AI V1.0 — Informe Técnico</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root{
+    --bg:#0B0F0C;
+    --panel:#13180F;
+    --panel2:#171D12;
+    --line:#2A3324;
+    --cream:#F4F1E4;
+    --muted:#8C9683;
+    --lime:#D4FF3F;
+    --tomato:#FF5C39;
+    --cheese:#FFB23D;
+    --mono: 'JetBrains Mono',monospace;
+    --display: 'Bricolage Grotesque', sans-serif;
+    --body: 'Space Grotesk', sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{ background:var(--bg); color:var(--cream); font-family:var(--body); line-height:1.5; }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 30px;}
+
+  /* COVER STRIP */
+  .cover{
+    background:var(--lime); color:#0B0F0C;
+    font-family:var(--mono); font-size:11.5px;
+    padding:11px 0;
+    border-bottom:3px solid #0B0F0C;
+  }
+  .cover .wrap{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px 24px;}
+  .cover .uni{font-weight:700; letter-spacing:.02em;}
+  .cover .meta{display:flex; gap:18px; flex-wrap:wrap; opacity:.85;}
+  .cover .meta b{font-weight:700;}
+
+  /* HERO */
+  .hero{ position:relative; overflow:hidden; padding:70px 0 50px; border-bottom:1px solid var(--line); }
+  .hero .wrap{position:relative; z-index:2;}
+  .scan-grid{
+    position:absolute; inset:0;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:46px 46px; opacity:.4;
+    mask-image: radial-gradient(ellipse at 80% 20%, black, transparent 65%);
+  }
+  .blob{position:absolute; top:-120px; right:-100px; width:420px; height:420px; border-radius:50%;
+    background:radial-gradient(circle at 40% 40%, rgba(212,255,63,.18), transparent 70%); filter:blur(10px); z-index:1;}
+  .eyebrow{ font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--tomato);
+    display:flex; align-items:center; gap:10px; margin-bottom:24px; }
+  .eyebrow::before{content:"●"; color:var(--tomato); font-size:9px;}
+  h1{ font-family:var(--display); font-size:clamp(48px,8vw,96px); font-weight:800; letter-spacing:-0.03em; line-height:0.92; }
+  h1 .hl{ color:var(--lime); }
+  h1 .out{ -webkit-text-stroke:1.5px var(--cream); color:transparent; }
+  .hero-sub{ font-size:17px; color:var(--muted); max-width:560px; margin-top:24px; }
+  .integrantes{ margin-top:38px; display:flex; flex-wrap:wrap; gap:10px; }
+  .pill{ font-family:var(--mono); font-size:11.5px; border:1px solid var(--line); padding:6px 13px; border-radius:30px; color:var(--muted); }
+
+  section{ padding:60px 0; border-bottom:1px solid var(--line); }
+  section.alt{ background:var(--panel2); }
+  .tag{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--tomato); margin-bottom:12px; display:inline-block; }
+  h2{ font-family:var(--display); font-size:clamp(28px,4.2vw,44px); font-weight:800; margin-bottom:24px; max-width:700px; letter-spacing:-0.01em; }
+  p.lead{ color:var(--muted); max-width:660px; font-size:16.5px; margin-bottom:10px; }
+
+  /* threshold */
+  .threshold-box{ display:grid; grid-template-columns:1.05fr 1fr; gap:44px; align-items:center; margin-top:30px; }
+  .gauge-wrap{ background:var(--panel); border:1px solid var(--line); padding:32px; border-radius:4px; }
+  .gauge-track{ position:relative; height:16px; border-radius:8px; background:#241710; overflow:hidden; margin:20px 0 10px; }
+  .gauge-fill-fail{ position:absolute; left:0; top:0; bottom:0; width:52.5%; background:linear-gradient(90deg,#3a1812,var(--tomato)); }
+  .gauge-fill-pass{ position:absolute; right:0; top:0; bottom:0; width:47.5%; background:linear-gradient(90deg,var(--lime),#8fd62e); }
+  .gauge-marker{ position:absolute; top:-7px; left:52.5%; width:3px; height:30px; background:var(--cream); box-shadow:0 0 8px var(--cream); }
+  .gauge-labels{ display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .verdict{ font-family:var(--mono); font-size:12.5px; margin-top:20px; padding:13px 16px; background:rgba(255,92,57,.12); border:1px solid rgba(255,92,57,.4); color:var(--tomato); border-radius:3px; }
+  .scenario p{ font-size:15px; color:var(--muted); margin-bottom:16px; }
+  .scenario .msg{ font-family:var(--mono); font-size:13px; background:var(--panel); border-left:3px solid var(--tomato); padding:14px 18px; color:var(--cream); border-radius:0 4px 4px 0; }
+
+  /* experiment */
+  .exp-meta{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); margin:30px 0 36px; border-radius:4px; overflow:hidden; }
+  .exp-cell{ background:var(--panel); padding:24px 16px; text-align:center; }
+  .exp-cell .num{ font-family:var(--display); font-size:30px; color:var(--lime); font-weight:800; }
+  .exp-cell .lbl{ font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:6px; text-transform:uppercase; letter-spacing:.06em; }
+  .categories{ display:flex; flex-wrap:wrap; gap:9px; margin-bottom:42px; }
+  .chip{ font-family:var(--mono); font-size:12px; border:1px solid var(--line); padding:7px 14px; color:var(--cream); border-radius:30px; background:var(--panel); }
+  .chart-card{ background:var(--panel); border:1px solid var(--line); padding:32px; border-radius:4px; }
+  svg text{ font-family:var(--mono); fill:var(--muted); font-size:12px; }
+  .legend{ display:flex; gap:26px; margin-top:18px; font-family:var(--mono); font-size:12.5px; flex-wrap:wrap; }
+  .legend span{ display:inline-flex; align-items:center; gap:8px; }
+  .dot{ width:10px;height:10px;border-radius:50%;display:inline-block; }
+
+  /* evidence */
+  .evid-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; margin-top:30px; }
+  .evid{ background:var(--panel); padding:28px; }
+  .evid .ev-num{ font-family:var(--mono); font-size:11px; color:var(--tomato); }
+  .evid h3{ font-family:var(--display); font-size:17px; margin:12px 0 9px; font-weight:700; }
+  .evid p{ font-size:13.5px; color:var(--muted); }
+
+  .conc{ margin-top:8px; }
+  .conc-item{ display:grid; grid-template-columns:64px 1fr; gap:22px; padding:24px 0; border-top:1px solid var(--line); }
+  .conc-item:first-child{ border-top:none; }
+  .conc-item .cn{ font-family:var(--display); font-size:32px; color:var(--lime); opacity:.5; font-weight:800; }
+  .conc-item p{ font-size:16px; color:var(--cream); max-width:640px; padding-top:6px; }
+
+  footer{ padding:44px 0 64px; font-family:var(--mono); font-size:12px; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  a{ color:var(--lime); text-decoration:none; }
+
+  @media(max-width:760px){
+    .threshold-box, .exp-meta, .evid-grid{ grid-template-columns:1fr; }
+    .cover .wrap{ flex-direction:column; align-items:flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="wrap">
+    <span class="uni">Universidad Continental — Facultad de Ingeniería</span>
+    <span class="meta"><span><b>Docente:</b> Hugo Hespetia Huamanga</span><span><b>Año</b> del Fortalecimiento de la Soberanía Nacional · 2026–10</span></span>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="scan-grid"></div>
+  <div class="blob"></div>
+  <div class="wrap">
+    <span class="eyebrow">Informe técnico de Ingeniería de Software</span>
+    <h1>Nutri<span class="hl">Scan</span> <span class="out">AI</span><br>V1.0</h1>
+    <p class="hero-sub">Clasificador de alimentos por visión artificial: de la foto del plato a las calorías, en un solo paso. Construido con MobileNetV2, Streamlit y un filtro anti-falsos-positivos bajo Scrum, TDD y ATDD.</p>
+    <div class="integrantes">
+      <span class="pill">Franco Mansilla</span><span class="pill">Aderly Quispe</span><span class="pill">Brad Huaman</span><span class="pill">Thiery Vargas</span><span class="pill">Frank Hinojosa</span>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <span class="tag">El problema</span>
+    <h2>De la foto del plato a las calorías, en un paso</h2>
+    <p class="lead">El equipo trabajó bajo Scrum, con un backlog dividido en captura de imagen, motor de inferencia, filtro anti-falsos-positivos y una UI a prueba de modo oscuro. Todo integrado vía GitFlow (feature → dev → main), sin commits directos a producción.</p>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <span class="tag">ATDD — Filtro de confianza</span>
+    <h2>Bloquear lo que no es comida</h2>
+    <div class="threshold-box">
+      <div class="scenario">
+        <p><b style="color:var(--cream)">Escenario:</b> el usuario sube la foto de su rostro o un objeto de oficina en lugar de un plato.</p>
+        <p>El interceptor evalúa la capa Softmax; si la confianza máxima no supera el umbral de seguridad, aborta la consulta calórica del JSON.</p>
+        <div class="msg">"Alimento No Detectado. Por favor, asegúrate de subir o tomar una foto nítida de una comida."</div>
+      </div>
+      <div class="gauge-wrap">
+        <span class="tag" style="margin-bottom:0;">Umbral de confianza Softmax</span>
+        <div class="gauge-track">
+          <div class="gauge-fill-fail"></div>
+          <div class="gauge-fill-pass"></div>
+          <div class="gauge-marker"></div>
+        </div>
+        <div class="gauge-labels"><span>0%</span><span>50–55% límite</span><span>100%</span></div>
+        <div class="verdict">▾ Por debajo del umbral → predicción abortada</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <span class="tag">Experimentación de IA</span>
+    <h2>Transfer Learning sobre MobileNetV2</h2>
+    <p class="lead">Base congelada entrenada en ImageNet + GlobalAveragePooling2D + Dropout 20% + capa Densa Softmax sobre 10 clases, usando una partición de Food-101 (750 train / 250 val por clase).</p>
+    <div class="exp-meta">
+      <div class="exp-cell"><div class="num">10</div><div class="lbl">categorías</div></div>
+      <div class="exp-cell"><div class="num">8</div><div class="lbl">épocas</div></div>
+      <div class="exp-cell"><div class="num">0.0005</div><div class="lbl">learning rate</div></div>
+      <div class="exp-cell"><div class="num">20%</div><div class="lbl">dropout</div></div>
+    </div>
+    <div class="categories">
+      <span class="chip">Pizza</span><span class="chip">Hamburger</span><span class="chip">French Fries</span><span class="chip">Hot Dog</span><span class="chip">Sushi</span><span class="chip">Donuts</span><span class="chip">Ice Cream</span><span class="chip">Chicken Wings</span><span class="chip">Apple Pie</span><span class="chip">Caesar Salad</span>
+    </div>
+    <span class="tag">Convergencia del entrenamiento</span>
+    <div class="chart-card">
+      <svg viewBox="0 0 760 300" width="100%" height="auto">
+        <line x1="50" y1="10" x2="50" y2="250" stroke="#2A3324"/>
+        <line x1="50" y1="250" x2="730" y2="250" stroke="#2A3324"/>
+        <text x="10" y="14">100%</text>
+        <text x="18" y="132">50%</text>
+        <text x="26" y="254">0%</text>
+        <text x="55" y="270">Ep.1</text>
+        <text x="280" y="270">Ep.3</text>
+        <text x="500" y="270">Ep.5</text>
+        <text x="690" y="270">Ep.8</text>
+        <polyline points="60,193 280,114 500,71 710,39" fill="none" stroke="#FFB23D" stroke-width="2.5"/>
+        <polyline points="60,109 280,79 500,47 710,29" fill="none" stroke="#D4FF3F" stroke-width="2.5"/>
+        <circle cx="710" cy="29" r="4" fill="#D4FF3F"/>
+        <circle cx="710" cy="39" r="4" fill="#FFB23D"/>
+      </svg>
+      <div class="legend">
+        <span><i class="dot" style="background:#D4FF3F;"></i>Val Accuracy → 89.10%</span>
+        <span><i class="dot" style="background:#FFB23D;"></i>Train Accuracy → 86.40%</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <span class="tag">Sprint Review</span>
+    <h2>Evidencias del incremento de producto</h2>
+    <div class="evid-grid">
+      <div class="evid"><div class="ev-num">01</div><h3>Inferencia correcta</h3><p>Clasificación de Sushi con 97% de confianza y blindaje CSS contra el modo oscuro del navegador.</p></div>
+      <div class="evid"><div class="ev-num">02</div><h3>Filtro anti falsos positivos</h3><p>Imagen de rostro humano rechazada: 100% de los falsos positivos de la Beta mitigados.</p></div>
+      <div class="evid"><div class="ev-num">03</div><h3>Sincronización de equipo</h3><p>Push exitoso de los 5 integrantes a la organización remota Apus-team en GitHub.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="border-bottom:none;">
+  <div class="wrap">
+    <span class="tag">Conclusiones</span>
+    <h2>Cierre del proceso de ingeniería</h2>
+    <div class="conc">
+      <div class="conc-item"><div class="cn">01</div><p>El filtro de umbral de validación resolvió de forma concluyente los falsos positivos en producción.</p></div>
+      <div class="conc-item"><div class="cn">02</div><p>Streamlit Cloud + MobileNetV2 demuestran viabilidad, eficiencia de recursos y sostenibilidad energética.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>NutriScan AI V1.0 — Facultad de Ingeniería, Universidad Continental</span>
+  <span><a href="https://github.com/Apus-team/nutriscan-ai">GitHub →</a> &nbsp;&nbsp; <a href="https://nutriscan-apus.streamlit.app/">Despliegue →</a></span>
+</footer>
+
+</body>
+</html>
